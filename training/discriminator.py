@@ -174,8 +174,10 @@ class MultiScaleD(nn.Module):
         all_feat64 = []
         all_feat32 = []
         all_feat16 = []
+        batch = 1
         for k, disc in enumerate(self.mini_discs):
             logits, feat64, feat32, feat16 = disc(features[str(k)])
+            batch = features[str(k)].size(0)
             # all_logits.append(logits.view(features[str(k)].size(0), -1))
             all_logits.append(logits)
 
@@ -194,11 +196,19 @@ class MultiScaleD(nn.Module):
         all_feat64 = roi_align(all_feat64, bbox_s, (8, 8))
         all_feat32 = roi_align(all_feat32, bbox_m, (8, 8))
         all_feat16 = roi_align(all_feat16, bbox_l, (8, 8))
-        all_feat = torch.cat([all_feat64.mean(dim=0, keepdim=True), all_feat32.mean(dim=0, keepdim=True), all_feat16.mean(dim=0, keepdim=True)], dim=0)
-        all_feat_logit = self.last(all_feat)
 
-        return all_logits, all_feat_logit
+        feats = torch.cat([all_feat64, all_feat32, all_feat16], dim=0)
+        bbox = torch.cat([bbox_s, bbox_m, bbox_l], dim=0)
+        all_feats = None
+        for i in range(batch):
+            idx = bbox[:, 0] == i
+            tmp = feats[idx].mean(dim=0, keepdim=True)
+            all_feats = tmp if all_feats is None else torch.cat([all_feats, tmp], dim=0)
 
+        # all_feat = torch.cat([all_feat64.mean(dim=0, keepdim=True), all_feat32.mean(dim=0, keepdim=True), all_feat16.mean(dim=0, keepdim=True)], dim=0)
+        # all_feat_logit = self.last(all_feat)
+
+        return all_logits, self.last(all_feats)
 
 class ProjectedDiscriminator(torch.nn.Module):
     def __init__(
@@ -222,21 +232,21 @@ class ProjectedDiscriminator(torch.nn.Module):
             resolutions=self.feature_network.RESOLUTIONS,
             **backbone_kwargs,
         )
-        self.discriminator2 = MultiScaleD(
-            channels=self.feature_network.CHANNELS,
-            resolutions=self.feature_network.RESOLUTIONS,
-            **backbone_kwargs,
-        )
+        # self.discriminator2 = MultiScaleD(
+        #     channels=self.feature_network.CHANNELS,
+        #     resolutions=self.feature_network.RESOLUTIONS,
+        #     **backbone_kwargs,
+        # )
 
-        self.final_conv_I = Conv2dLayer(in_channels=4,  out_channels=1, kernel_size=3)
-        self.final_conv_O = Conv2dLayer(in_channels=3,  out_channels=1, kernel_size=3)
+        # self.final_conv_I = Conv2dLayer(in_channels=4,  out_channels=1, kernel_size=3)
+        # self.final_conv_O = Conv2dLayer(in_channels=3,  out_channels=1, kernel_size=3)
 
     def train(self, mode=True):
         self.feature_network = self.feature_network.train(False)
         self.discriminator1 = self.discriminator1.train(mode)
-        self.discriminator2 = self.discriminator2.train(mode)
-        self.final_conv_I = self.final_conv_I.train(mode)
-        self.final_conv_O = self.final_conv_O.train(mode)
+        # self.discriminator2 = self.discriminator2.train(mode)
+        # self.final_conv_I = self.final_conv_I.train(mode)
+        # self.final_conv_O = self.final_conv_O.train(mode)
         return self
 
     def eval(self):
@@ -284,21 +294,21 @@ class ProjectedDiscriminator(torch.nn.Module):
 
         if x.shape[1] == 1:
             x = x.repeat(1, 3, 1, 1)
-        m_feat = mask.repeat(1, 3, 1, 1)
+        # m_feat = mask.repeat(1, 3, 1, 1)
 
         x_feat = self.feature_network(x)
-        m_feat = self.feature_network(m_feat)
+        # m_feat = self.feature_network(m_feat)
 
         pre_label, pre_bbox = self.pre_bbox(bbox)
         bbox_s, bbox_m, bbox_l = self.classifier(pre_label, pre_bbox)
 
         logits, obj_logits = self.discriminator1(x_feat, bbox_s, bbox_m, bbox_l)
-        m_logits, m_obj_logits = self.discriminator2(m_feat, bbox_s, bbox_m, bbox_l)
-
+        # m_logits, m_obj_logits = self.discriminator2(m_feat, bbox_s, bbox_m, bbox_l)
+        m_logits, m_obj_logits = 0, 0
         logits = logits + beta * m_logits
         obj_logits = obj_logits + beta * m_obj_logits
 
-        logits = self.final_conv_I(logits)
-        obj_logits = self.final_conv_O(obj_logits.squeeze(1).unsqueeze(0))
+        # logits = self.final_conv_I(logits)
+        # obj_logits = self.final_conv_O(obj_logits.squeeze(1).unsqueeze(0))
 
         return logits, obj_logits

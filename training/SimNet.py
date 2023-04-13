@@ -323,8 +323,10 @@ class RenderNet(nn.Module):
             #     fus = getattr(self, f'fus{res}')
             #     gamma = fus(F.adaptive_avg_pool2d(x_orig, (res, res)))
             #     x = x*gamma
-        return img, mask_x, feats
-
+        if get_feats:
+            return img, mask_x, feats
+        else:
+            return img, mask_x, None
 
 
 
@@ -448,7 +450,7 @@ class SimGenerator(nn.Module):
         mid_masks = grid_sample_gradfix.grid_sample(sin_ms, grid).view(-1, self.bbox_dim, self.mid_size, self.mid_size)
         mid_masks = mid_masks * bbox_mask(z.device, bbox, self.mid_size, self.mid_size)
         # mid_masks = mid_masks.mul(2.0) - 1.0 # [0, 1]adjust to [-1, 1]
-        img, sem_mask, feats = self.render_net(mid_masks*2.0-1.0, ws[:, self.num_ws:], get_feat=get_feat) #mask[0, 1]
+        img, sem_mask, feats = self.render_net(mid_masks*2.0-1.0, ws[:, self.num_ws:], get_feats=get_feat) #mask[0, 1]
         if isTrain:
             return img, sem_mask, ws, mid_masks.sum(dim=1, keepdim=True).clamp(0, 1)*2-1
             # return img, torch.max(mask*0.5+0.5, dim=1).values.unsqueeze(1), ws, torch.max(mid_masks, dim=1).values.unsqueeze(1)

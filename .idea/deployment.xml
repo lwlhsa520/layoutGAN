@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" serverName="lwlhsa@172.18.13.82:22 password" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="bdbd@172.18.13.75:22 password">
         <serverdata>
@@ -19,7 +19,7 @@
       <paths name="lwlhsa@172.18.13.82:22 password">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/lwlhsa/coding/layoutGAN" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

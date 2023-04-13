@@ -423,7 +423,7 @@ class SynthesisBlock(torch.nn.Module):
             self.skip = Conv2dLayer(in_channels, out_channels, kernel_size=1, bias=False, up=2,
                 resample_filter=resample_filter, channels_last=self.channels_last)
 
-    def forward(self, x, img, mask=None, mask_x=None, ws=None, force_fp32=False, fused_modconv=None, **layer_kwargs):
+    def forward(self, x, img, mask_x=None, ws=None, force_fp32=False, fused_modconv=None, **layer_kwargs):
         w_iter = None
         if ws is not None:
             misc.assert_shape(ws, [None, self.num_conv + self.num_torgb, self.w_dim])
@@ -484,7 +484,7 @@ class SynthesisBlock(torch.nn.Module):
         if self.use_mask:
             return x, img, mask_x
         else :
-            return x, img, None
+            return x, img
 #----------------------------------------------------------------------------
 
 @persistence.persistent_class
