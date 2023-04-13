@@ -313,7 +313,7 @@ def compute_feature_stats_for_generator(opts, detector_url, detector_kwargs, rel
 
     # Image generation func.
     def run_generator(z, bbox):
-        img, mask, _, _, _ = G(z=z, bbox=bbox, **opts.G_kwargs)
+        img, mask, _, _ = G(z=z, bbox=bbox, **opts.G_kwargs)
         img = (img * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         mask = (mask * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         return img, mask
